@@ -1,0 +1,288 @@
+---
+title: "study code"
+author: "heedong"
+date: "4/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library, results=FALSE, message=FALSE, warning=FALSE}
+# load library
+library('tidyverse')
+library('here')
+library("brms")
+```
+
+## Chapter 1
+
+#get dataset
+```{r}
+hibbs <- here("ROS-Examples-master", "ElectionsEconomy", "data", "hibbs.dat")
+
+hibbs <- read.table(hibbs, header = TRUE)
+
+```
+
+#create model
+```{r}
+m1 <- brm(
+  vote ~ growth, 
+  data = hibbs
+)
+```
+
+#plot the data and add fitted line (Figure 1.1)
+```{r}
+# abline(fixef(m1), col="gray")
+M1 <-fixef(m1)
+plot(
+  hibbs$growth, 
+  hibbs$vote, 
+  xlab="Average recent growth in personal income",
+  ylab="Incumbent party's vote share"
+)
+
+abline(a = M1[1,1], b = M1[2,1], col = "gray")
+abline(coef = c(M1[1,1], M1[2,1]), col ="red")
+abline(coef = M1[,1], col ="blue")
+```
+
+#1.6 
+#examples of how the models can be fit to the data 
+```{r}
+fit <- brm(y ~ x, data=mydata)
+
+fit <- stan_glm(y ~ x, data=mydata)
+
+fit <- lm(y ~ x, data=mydata)
+
+fit <- stan_glm(y ~ x, data=mydata, algorithm="optimizing")
+```
+
+##Chapter 2
+#get dataset
+```{r}
+health <- here("ROS-Examples-master", "HealthExpenditure", "data", "healthdata.txt")
+
+health <- read.table(health, header = TRUE)
+```
+
+#draw a scatter plot (Figure 2.4)
+```{r}
+country <- rownames(health)
+
+plot(health$spending, health$lifespan, type="n")
+
+text(health$spending, health$lifespan, country)
+```
+
+#try model fitting 
+```{r}
+model2 <- brm(
+  lifespan ~ spending, 
+  data = health
+)
+
+# abline(fixef(m2), col="gray")
+M2 <-fixef(model2)
+# plot(
+#   health$lifespan, 
+#   health$spending, 
+#   xlab="Average recent growth in personal income",
+#   ylab="Incumbent party's vote share"
+# )
+
+abline(a = M2[1,1], b = M2[2,1], col = "gray")
+abline(coef = c(M2[1,1], M2[2,1]), col ="red")
+abline(coef = M2[,1], col ="blue")
+
+```
+
+##Chapter 3
+```{r}
+dnorm(0.5, 0.5, 0.2)/2e5
+
+dbinom(1e5, 2e5, 0.5)
+
+dbinom(1e5, 2e5, 0.49)
+```
+
+
+```{r}
+x = runif(100, -1, 1)
+
+n = 100
+
+x = runif(n, -1, 1)
+
+y = 0.2 + 0.3*x + rnorm(n, 0, 0.5)
+
+plot(x, y)
+
+y = 0.2 + 0.3*x + rnorm(n, 0, 0.1)
+
+lot(x, y)
+
+
+df = data.frame(x = x, y = y)
+
+lm1 = lm(y~x, data = df)
+
+summary(lm1)
+```
+
+##chapter 4 
+```{r}
+estimate <- 40/100# y/n
+
+se <- sqrt(estimate*(1-estimate)/n)
+se
+interval_95 <- estimate + qnorm(c(0.025, 0.975))*se
+interval_95
+```
+
+##chapter 5
+
+#5.1
+```{r}
+n_girls <- rbinom(1, 400, 0.488)
+
+print(n_girls)
+
+n_sims <- 1000
+n_girls <- rep(NA, n_sims) #replicates values in x 
+for (s in 1:n_sims){
+ n_girls[s] <- rbinom(1, 400, 0.488)
+}
+hist(n_girls) #computes a histogram
+
+n_girls <- rbinom(n_sims, 400, 0.488)
+
+birth_type <- sample(c("fraternal twin","identical twin","single birth"),
+ size=400, replace=TRUE, prob=c(1/125, 1/300, 1 - 1/125 - 1/300))
+girls <- rep(NA, 400)
+
+#400 birth events 
+for (i in 1:400){ 
+ if (birth_type[i]=="single birth") {
+  girls[i] <- rbinom(1, 1, 0.488)
+ } else if (birth_type[i]=="identical twin") {
+  girls[i] <- 2*rbinom(1, 1, 0.495)
+ } else if (birth_type[i]=="fraternal twin") {
+  girls[i] <- rbinom(1, 2, 0.495)
+ }
+}
+n_girls <- sum(girls)
+
+girls <- ifelse(birth_type=="single birth", rbinom(400, 1, 0.488),
+ ifelse(birth_type=="identical twin", 2*rbinom(400, 1, 0.495),
+ rbinom(400, 2, 0.495)))
+
+girls <- ifelse(birth_type=="single birth", rbinom(400, 1, 0.488),
+ ifelse(birth_type=="identical twin", 2*rbinom(400, 1, 0.495),
+ rbinom(400, 2, 0.495)))
+
+```
+
+#5.2
+```{r}
+n_sims <- 1000
+   y1 <- rnorm(n_sims, 3, 0.5)
+   y2 <- exp(y1)
+   y3 <- rbinom(n_sims, 20, 0.6)
+   y4 <- rpois(n_sims, 5)
+   par(mfrow=c(2,2))
+   hist(y1, breaks=seq(floor(min(y1)), max(y1) + 0.2, 0.2),
+     main="1000 draws from a normal dist. with mean 3, sd 0.5")
+   hist(y2, breaks=seq(0, max(y2) + 5, 5),
+     main="1000 draws from the corresponding lognormal dist.")
+   hist(y3, breaks=seq(-0.5, 20.5, 1),
+     main="1000 draws from the binomial dist. with 20 tries, probability 0.6")
+   hist(y4, breaks=seq(-0.5, max(y4) + 1, 1),
+main="1000 draws from the Poisson dist. with mean 5")
+```
+
+#5.4
+```{r}
+earning_dir <- here("ROS-Examples-master", "Earnings", "data", "earnings.csv")
+
+earnings <- read.csv(earning_dir, "earnings.csv", col_names = TRUE)
+earn <- earnings$earn
+male <- earnings$male
+ratio <- median(earn[male==0]) / median(earn[male==1])
+
+n <- nrow(earnings)
+   boot <- sample(n, replace=TRUE)
+   earn_boot <- earn[boot]
+   male_boot <- male[boot]
+   ratio_boot <- median(earn_boot[male_boot==0]) / median(earn_boot[male_boot==1])
+   
+boot_ratio <- function(data){
+     n <- nrow(data)
+     boot <- sample(n, replace=TRUE)
+     earn_boot <- data$earn[boot]
+     male_boot <- data$male[boot]
+     median(earn_boot[male_boot==0]) / median(earn_boot[male_boot==1])
+}
+
+
+n_sims <- 10000
+output <- replicate(n_sims, boot_ratio(data=earnings))
+   
+hist(output)
+print(sd(output))
+   
+
+```
+
+##chapter 6
+#6.2
+```{r}
+x <- 1:20
+   n <- length(x)
+   a <- 0.2
+   b <- 0.3
+   sigma <- 0.5
+   y <- a + b*x + sigma*rnorm(n)
+   
+
+fake <- data.frame(x, y)
+
+fit_1 <- brm(y ~ x, data=fake)
+
+print(fit_1, digits=2)
+
+plot(fake$x, fake$y, main="Data and fitted regression line")
+
+#a_hat <- coef(fit_1)[1]
+a_hat = 0.49
+#b_hat <- coef(fit_1)[2]
+b_hat = 0.27
+  
+abline(a_hat, b_hat)
+
+
+   x_bar <- mean(fake$x)
+   text(x_bar, a_hat + b_hat*x_bar,
+     paste("y =", round(a_hat, 2), "+", round(b_hat, 2), "* x"), adj=0)
+```
+
+#6.5
+```{r}
+n <- 1000
+   true_ability <- rnorm(n, 50, 10)
+   noise_1 <- rnorm(n, 0, 10)
+   noise_2 <- rnorm(n, 0, 10)
+   midterm <- true_ability + noise_1
+   final <- true_ability + noise_2
+   exams <- data.frame(midterm, final)
+   
+fit_1 <- brm(final ~ midterm, data=exams)
+   plot(midterm, final, xlab="Midterm exam score", ylab="Final exam score")
+   #abline(coef(fit_1))
+   abline(fixef(fit_1)[,1]) #brm에서는 결과를 뽑는 방법이 다르기 때문에 다른 function 사용해야 함. 
+```
+
