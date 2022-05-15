@@ -286,3 +286,142 @@ fit_1 <- brm(final ~ midterm, data=exams)
    abline(fixef(fit_1)[,1]) #brm에서는 결과를 뽑는 방법이 다르기 때문에 다른 function 사용해야 함. 
 ```
 
+
+##chapter 7 
+
+#7.1
+```{r}
+hibbs <- here("ROS-Examples-master", "ElectionsEconomy", "data", "hibbs.dat")
+
+hibbs <- read.table(hibbs, header = TRUE)
+
+plot(hibbs$growth, hibbs$vote, xlab="Economic growth",
+ ylab="Incumbent party's vote share")
+```
+
+#model fitting
+```{r}
+m1 <- brm(vote ~ growth, 
+          data=hibbs)
+
+print(m1)
+
+M1 <- fixef(m1)
+
+abline(a = M1[1,1], b = M1[2,1], col = "red")
+
+
+1 - pnorm(50, 52.3, 3.9)
+```
+
+#7.2
+#Step 1: Creating the pretend world
+```{r}
+a <- 46.3
+b <- 3.0
+sigma <- 3.9
+x <- hibbs$growth
+n <- length(x)
+```
+
+#Step 2: Simulating fake data
+```{r}
+y <- a + b*x + rnorm(n, 0, sigma)
+   fake <- data.frame(x, y)
+```
+
+#Step 3: Fitting the model and comparing fitted to assumed values
+```{r}
+fit <- brm(y ~ x, data=fake)
+   print(fit)
+   
+b_hat <- fixef(fit)["x"]
+ b_se <- se(fit)["x"]
+ 
+cover_68 <- abs(b - b_hat) < b_se
+   cover_95 <- abs(b - b_hat) < 2*b_se
+   cat(paste("68% coverage: ", cover_68, "\n"))
+   cat(paste("95% coverage: ", cover_95, "\n")) 
+```
+
+#Step 4: Embedding the simulation in a loop
+```{r}
+n_fake <- 1000
+cover_68 <- rep(NA, n_fake)
+cover_95 <- rep(NA, n_fake)
+for (s in 1:n_fake){
+  y <- a + b*x + rnorm(n, 0, sigma)
+  fake <- data.frame(x, y)
+  fit <- stan_glm(y ~ x, data=fake, refresh=0)
+  b_hat <- coef(fit)["x"]
+  b_se <- se(fit)["x"]
+  cover_68[s] <- abs(b - b_hat) < b_se
+  cover_95[s] <- abs(b - b_hat) < 2*b_se
+}
+cat(paste("68% coverage: ", mean(cover_68), "\n"))
+cat(paste("95% coverage: ", mean(cover_95), "\n"))
+# suppress output on console
+```
+
+#7.3
+```{r}
+n_0 <- 20
+y_0 <- rnorm(n_0, 2.0, 5.0)
+fake_0 <- data.frame(y_0)
+print(y_0)
+
+mean(y_0)
+se <- sd(y_0)/sqrt(n_0)
+
+
+
+fit_0 <- brm(y_0 ~ 1, data=fake_0#,
+#prior_intercept=NULL,
+#prior=NULL,
+#prior_aux=NULL
+)
+print(fit_0)
+
+
+```
+
+```{r}
+n_1 <- 30
+y_1 <- rnorm(n_1, 8.0, 5.0)
+
+diff <- mean(y_1) - mean(y_0)
+se_0 <- sd(y_0)/sqrt(n_0)
+se_1 <- sd(y_1)/sqrt(n_1)
+se <- sqrt(se_0^2 + se_1^2)
+```
+
+
+#chapter 8
+
+```{r}
+rss <- function(x, y, a, b){     # x and y are vectors, a and b are scalars
+     resid <- y - (a + b*x)
+     return(sum(resid^2))
+}
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
