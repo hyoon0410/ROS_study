@@ -543,10 +543,158 @@ theta_hat_bayes <- (theta_hat_prior/se_prior^2 + theta_hat_data/se_data^2) /
 se_bayes <- sqrt(1/(1/se_prior^2 + 1/se_data^2))
 ```
 
+#Uniform prior distribution
+```{r}
+M3 <- stan_glm(vote ~ growth, data=hibbs, prior_intercept=NULL, prior=NULL, prior_aux=NULL)
+M3
+sims <- as.data.frame(M3)
+a <- sims[,1]
+b <- sims[,2]
+plot(a, b)
+```
+
+#Default prior distribution
+```{r}
+sd_x <- sd(hibbs$growth)
+sd_y <- sd(hibbs$vote)
+mean_y <- mean(hibbs$vote)
+M1a <- stan_glm(vote ~ growth, data=hibbs, prior=normal(0, 2.5*sd_y/sd_x), prior_intercept=normal(mean_y, 2.5*sd_y), prior_aux=exponential(1/sd_y))
+```
+
+#Weakly informative prior distribution based on subject-matter knowledge
+```{r}
+M4 <- stan_glm(vote ~ growth, data=hibbs,
+     prior=normal(5, 5), prior_intercept=normal(50, 10))
+M4
+```
+
+#Example where an informative prior makes a difference: Beauty and sex ratio
+#get data 
+```{r}
+# sexratio <- here("ROS-Examples-master", "SexRatio", "data", "sexratio.rda")
+# 
+# sexratio<- read.table(sexratio, header = TRUE)
+
+x <- seq(-2,2,1)
+y <- c(50, 44, 50, 47, 56)
+sexratio <- data.frame(x, y)
+
+fit_post0 <- stan_glm(y ~ x, data=sexratio)
+
+fit_post <- stan_glm(y ~ x, data=sexratio,
+     prior=normal(0, 0.2), prior_intercept=normal(48.8, 0.5))
+print(fit_post)
+sims0 <- as.data.frame(fit_post0)
+simsS <- as.data.frame(fit_post)
+a <- simsS[,1]
+b <- simsS[,2]
+a0 <-sims0[,1]
+b0 <- sims0[,2]
+plot(a, b)
+plot(a0, b0)
+
+```
+
+##Chapter 10 
+#10.1 Adding predictors to a model
+#Single predictor (binary)
+```{r}
+#call data
+kidiq <- here("ROS-Examples-master", "KidIQ", "data", "kidiq.csv")
+
+kidiq<- read.csv(kidiq, header = TRUE)
+
+#binary predictor
+fit_kid <- stan_glm(kid_score ~ mom_hs, data=kidiq)
+fit_kid
+```
+
+#A single continuous predictor
+```{r}
+fit_kid_cont <- stan_glm(kid_score ~ mom_iq, data=kidiq)
+fit_kid_cont
+```
+
+#Including both predictors
+```{r}
+fit_3 <- stan_glm(kid_score ~ mom_hs + mom_iq, data=kidiq)
+print(fit_3)
+
+```
+
+#10.3 Interactions
+```{r}
+fit_4 <- stan_glm(kid_score ~ mom_hs + mom_iq + mom_hs:mom_iq, data=kidiq)
+print(fit_4)
+```
+
+#10.4 Indicator variables 
+```{r}
+#call data
+earnings <- here("ROS-Examples-master", "Earnings", "data", "earnings.csv")
+
+earnings<- read.csv(earnings, header = TRUE)
+
+fit_1 <- stan_glm(weight ~ height, data=earnings)
+print(fit_1)
+
+
+coefs_1 <- coef(fit_1)
+predicted_1 <- coefs_1[1] + coefs_1[2]*66
+
+new <- data.frame(height=66)
+pred <- posterior_predict(fit_1, newdata=new)
+
+cat("Predicted weight for a 66-inch-tall person is", round(mean(pred)),
+       "pounds with a sd of", round(sd(pred)), "\n")
+```
+
+#centering a predictor
+```{r}
+earnings$c_height <- earnings$height - 66
+fit_2 <- stan_glm(weight ~ c_height, data=earnings)
+print(fit_2)
+```
+
+#Including a binary variable in a regression
+```{r}
+fit_3 <- stan_glm(weight ~ c_height + male, data=earnings)
+
+#woman data
+coefs_3 <- coef(fit_3)
+predicted <- coefs_3[1] + coefs_3[2]*4.0 + coefs_3[3]*0
+
+new <- data.frame(c_height=4.0, male=0)
+pred <- posterior_predict(fit_3, newdata=new)
+cat("Predicted weight for a 70-inch-tall woman is", round(mean(pred)),
+"pounds with a sd of", round(sd(pred)), "\n")
+
+```
+
+#Using indicator variables for multiple levels of a categorical predictor
+```{r}
+fit_4 <- stan_glm(weight ~ c_height + male + factor(ethnicity), data=earnings)
+
+print(fit_4)
+```
+
+#Changing the baseline factor level
+```{r}
+earnings$eth <- factor(earnings$ethnicity,
+     levels=c("White", "Black", "Hispanic", "Other"))
+
+fit_5 <- stan_glm(weight ~ c_height + male + eth, data=earnings)
+print(fit_5)
+
+```
+
 #
 ```{r}
 
 ```
+
+
+
 
 
 
