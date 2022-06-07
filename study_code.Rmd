@@ -688,13 +688,38 @@ print(fit_5)
 
 ```
 
+#10.5 
+#paired design
+```{r}
+# earnings <- here("ROS-Examples-master", "Earnings", "data", "earnings.csv")
+# 
+# earnings<- read.csv(earnings, header = TRUE)
+
+fit <- stan_glm(y ~ treatment + factor(pairs), data=expt)
+```
+
 #
 ```{r}
 
 ```
 
+```{r}
 
+```
 
+```{r}
 
+```
 
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
 
