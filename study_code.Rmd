@@ -729,6 +729,66 @@ kidiq$z_mom_hs <- (kidiq$mom_hs - mean(kidiq$mom_hs))/(2*sd(kidiq$mom_hs))
 kidiq$z_mom_iq <- (kidiq$mom_iq - mean(kidiq$mom_iq))/(2*sd(kidiq$mom_iq))
 ```
 
+#Earnings and height example 
+```{r}
+
+logmodel_1 <- stan_glm(log(earn) ~ height, data=earnings, subset=earn>0)
+print(logmodel_1)
+
+yrep_1 <- posterior_predict(fit_1)
+
+n_sims <- nrow(yrep_1)
+
+subset <- sample(n_sims, 100)
+library("bayesplot")
+ppc_dens_overlay(earnings$earn, yrep_1[subset,])
+```
+
+#Building a regression model on the log scale
+```{r}
+logmodel_2 <- stan_glm(log(earn) ~ height + male, data=earnings, subset=earn>0)
+
+```
+
+#Including an interaction
+```{r}
+logmodel_3 <- stan_glm(log(earn) ~ height + male + height:male,
+     data=earnings, subset=earn>0)
+```
+
+#Linear transformation to make coefficients more interpretable.
+```{r}
+earnings$z_height <- (earnings$height - mean(earnings$height))/sd(earnings$height)
+```
+
+#Example: predicting the yields of mesquite bushes (leave-one-out (LOO) cross validation
+```{r}
+mesquite <- here("ROS-Examples-master", "Mesquite", "data", "mesquite.dat")
+
+mesquite<- read.table(mesquite, header = TRUE)
+
+fit_1 <- stan_glm(formula = weight ~ diam1 + diam2 + canopy_height +
+                     total_height + density + group, data=mesquite)
+
+(loo_1 <- loo(fit_1))
+
+fit_2 <- stan_glm(formula = log(weight) ~ log(diam1) + log(diam2) + log(canopy_height) + log(total_height) + log(density) + group, data=mesquite)
+
+(loo_2 <- loo(fit_2))
+
+canopy_volume = mesquite$diam1 * mesquite$diam2 * mesquite$canopy_height
+
+fit_3 <- stan_glm(log(weight) ~ log(canopy_volume), data=mesquite)
+
+loo_3 <- loo(fit_3)
+loo_compare(loo_2, loo_3)
+```
+
+
+```{r}
+
+```
+
 ```{r}
 
 ```
