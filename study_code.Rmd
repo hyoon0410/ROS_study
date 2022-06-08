@@ -695,20 +695,38 @@ print(fit_5)
 # 
 # earnings<- read.csv(earnings, header = TRUE)
 
-fit <- stan_glm(y ~ treatment + factor(pairs), data=expt)
 ```
 
-#
+#Chapter 12 
+#12.1 Linear transformations
 ```{r}
+earnings <- here("ROS-Examples-master", "Earnings", "data", "earnings.csv")
 
+earnings<- read.csv(earnings, header = TRUE)
+
+fit1 <- stan_glm(earn ~ height, data=earnings)
+fit2 <- brm(earn ~ height, data=earnings)
+
+fit1
+fit2
 ```
 
+#Centering by subtracting the mean of the data 
 ```{r}
+kidiq <- here("ROS-Examples-master", "KidIQ", "data", "kidiq.csv")
 
+kidiq<- read.csv(kidiq, header = TRUE)
+
+kidiq$c_mom_hs <- kidiq$mom_hs - mean(kidiq$mom_hs)
+
+kidiq$c_mom_iq <- kidiq$mom_iq - mean(kidiq$mom_iq)
 ```
 
+#Standardizing by subtracting the mean and dividing by 2 standard deviations
 ```{r}
+kidiq$z_mom_hs <- (kidiq$mom_hs - mean(kidiq$mom_hs))/(2*sd(kidiq$mom_hs))
 
+kidiq$z_mom_iq <- (kidiq$mom_iq - mean(kidiq$mom_iq))/(2*sd(kidiq$mom_iq))
 ```
 
 ```{r}
