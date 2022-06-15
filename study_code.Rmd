@@ -784,20 +784,185 @@ loo_3 <- loo(fit_3)
 loo_compare(loo_2, loo_3)
 ```
 
+#Chapter 13
+#13.1 Logistic regression with a single predictor
+```{r}
+logit <- qlogis
+invlogit <- plogis
+```
+
+#fit logistic regression using "bernoulli"
+```{r}
+nes92 <- here("ROS-Examples-master", "NES", "data", "nes.txt")
+
+nes92<- read.table(nes92, header = TRUE)
+
+# fit_1 <- stan_glm(rvote ~ income, family=binomial(link="logit"), data=nes92)
+#    print(fit_1)
+   
+fit_1 <- brm(
+  rvote ~ income, 
+  family=bernoulli(link="logit"),
+  data=nes92,
+  refresh = 0
+  )
+
+fit_2 <- brm(
+  rvote | trials (1) ~ income, 
+  family=binomial(link="logit"),
+  data=nes92,
+  refresh = 0
+  )
+
+print(fit_1)
+print(fit_2)
+   
+plot(nes92$income, nes92$rvote)
+curve(invlogit(fixef(fit_1)[1] + fixef(fit_1)[2]*x), add=TRUE)
+```
+
+#Fitting the model using stan_glm and displaying uncertainty in the fitted model
+```{r}
+sims_1 <- as.matrix(fit_1)
+n_sims <- nrow(sims_1)
+
+for (j in sample(n_sims, 20)){
+     curve(invlogit(sims_1[j,1] + sims_1[j,2]*x), col="gray", lwd=0.5, add=TRUE)
+   }
+```
+
+#13.2 Interpreting logistic regression coefficients and the divide-by-4 rule
+```{r}
+
+```
+
+#13.3 Predictions and comparisons
+#Point prediction using predict
+```{r}
+new <- data.frame(income=5)
+pred <- predict(fit_1, type="response", newdata=new)
+pred
+```
+
+#Linear predictor with uncertainty using posterior_linpred
+```{r}
+linpred <- posterior_linpred(fit_1, newdata=new)
+linpred
+```
+
+#Expected outcome with uncertainty using posterior_epred
+```{r}
+epred <- posterior_epred(fit_1, newdata=new)
+epred
+
+print(c(mean(epred), sd(epred)))
+
+a <- invlogit(posterior_linpred(fit_1, newdata=new))
+```
+
+#Predictive distribution for a new observation using posterior_predict
+```{r}
+postpred <- posterior_predict(fit_1, newdata=new)
+postpred
+
+print(c(mean(postpred), sd(postpred)))
+
+```
+
+#Prediction given a range of input values
+```{r}
+new <- data.frame(income=1:5)
+pred <- predict(fit_1, type="response", newdata=new)
+linpred <- posterior_linpred(fit_1, newdata=new)
+epred <- posterior_epred(fit_1, newdata=new)
+postpred <- posterior_predict(fit_1, newdata=new)
+new
+pred
+linpred
+epred
+postpred
+
+mean(epred[,5] > epred[,4])
+mean(epred[,5] - epred[,4])
+
+quantile(epred[,5] - epred[,4], c(0.025, 0.975))
+
+```
+
+#Logistic regression with just an intercept
+```{r}
+y <- rep(c(0, 1), c(40, 10))
+y
+simple <- data.frame(y)
+simple
+fit <- stan_glm(y ~ 1, family=binomial(link="logit"), data=simple)
+fit
+```
+
+#data on the boundary 
+```{r}
+y <- rep(c(0, 1), c(50, 0))
+simple <- data.frame(y)
+fit <- stan_glm(y ~ 1, family=binomial(link="logit"), data=simple)
+```
+
+#Logistic regression with a single binary predictor
+```{r}
+x <- rep(c(0, 1), c(50, 60))
+x
+y <- rep(c(0, 1, 0, 1), c(40, 10, 40, 20))
+y
+simple <- data.frame(x, y)
+simple
+fit <- stan_glm(y ~ x, family=binomial(link="logit"), data=simple)
+fit
+
+
+new <- data.frame(x=c(0, 1))
+new
+epred <- posterior_epred(fit, newdata=new)
+epred
+diff <- epred[,2] - epred[,1]
+diff
+print(c(mean(diff), sd(diff)))
+
+
+```
+
+##13.4 Latent-data formulation
+```{r}
+ 
+```
+
 
 ```{r}
 
 ```
 
-```{r}
-
-```
 
 ```{r}
 
 ```
 
+
 ```{r}
 
 ```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
 
